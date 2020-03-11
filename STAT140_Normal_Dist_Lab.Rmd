@@ -1,0 +1,285 @@
+---
+title: "Ch. 4 Distribution Lab"
+author: "YOUR NAME HERE"
+output:
+  pdf_document: default
+---
+
+*This includes lab materials available in the Distribution lab available through OpenIntro, which was adapted for OpenIntro by Andrew Bray and Mine Cetinkaya-Rundel from a lab written by Mark Hansen of UCLA Statistics. These materials are available at* <a href="http://htmlpreview.github.io/?https://github.com/andrewpbray/oiLabs-base-R/blob/master/normal_distribution/normal_distribution.html">OpenIntro: Normal Distribution</a>.
+
+## Normal Distribution
+
+In this portion of the lab we’ll investigate the probability distribution that is most central to statistics: the normal distribution. If we are confident that our data are nearly normal, that opens the door to many powerful statistical methods. Here we'll use the graphical tools of R to assess the normality of our data and also learn how to generate random numbers from a normal distribution.
+
+### The data
+
+This week we'll be working with measurements of body dimensions. This data set contains measurements from 247 males and 260 females, most of whom were considered healthy young adults.
+
+```{r download body dimensions data}
+download.file("http://www.openintro.org/stat/data/bdims.RData", destfile = "bdims.RData")
+load("bdims.RData")
+
+library(ggplot2)
+```
+
+You'll see that for every observation we have 25 measurements, many of which are either diameters or girths. A key to the variable names can be found at http://www.openintro.org/stat/data/bdims.php, but we’ll be focusing on just three columns to get started: weight in kg (wgt), height in cm (hgt), and sex (1 indicates male, 0 indicates female).
+
+Since males and females tend to have different body dimensions, it will be useful to create two additional data sets: one with only males and another with only females.
+
+```{r split into two data sets}
+mdims <- subset(bdims, sex == 1)
+fdims <- subset(bdims, sex == 0)
+```
+
+
+**Exercise 1.** Make a histogram of males' heights and a histogram of females' heights (use R). How would you compare the various aspects of the two distributions (describe them and compare using text outside of the R code chunk)? 
+
+```{r}
+
+```
+
+**Answer:**
+
+### The Normal Distribution
+
+In your description of the distributions, did you use words like *bell-shaped* or *normal*? It’s tempting to say so when faced with a unimodal symmetric distribution.
+
+To see how accurate that description is, we can plot a normal distribution curve on top of a histogram to see how closely the data follow a normal distribution, just as we did in the class notes. This normal curve should have the same mean and standard deviation as the data. We’ll be working with females' heights, so let’s store them as a separate object and then calculate some statistics that will be referenced later.
+
+```{r sample statistics female height}
+fhgtmean <- mean(fdims$hgt)
+fhgtsd   <- sd(fdims$hgt)
+```
+
+
+Next we make a density histogram to use as the backdrop and use the lines function to overlay a normal probability curve. The difference between a frequency histogram and a density histogram is that while in a frequency histogram the *heights* of the bars add up to the total number of observations, in a density histogram the areas of the bars add up to 1. The area of each bar can be calculated as simply the height *times* the width of the bar. Using a density histogram allows us to properly overlay a normal distribution curve over the histogram since the curve is a normal probability density function. Frequency and density histograms both display the same exact shape; they only differ in their y-axis. You can verify this by comparing the frequency histogram you constructed earlier and the density histogram created by the commands below.
+
+```{r density histogram women}
+hist(fdims$hgt, probability = TRUE, main="")
+x <- 140:190
+y <- dnorm(x = x, mean = fhgtmean, sd = fhgtsd)
+lines(x = x, y = y, col = "blue")
+```
+
+After plotting the density histogram with the first command, we create the x- and y-coordinates for the normal curve. We chose the x range as 140 to 190 in order to span the entire range of fheight. To create y, we use dnorm to calculate the density of each of those x-values in a distribution that is normal with mean fhgtmean and standard deviation fhgtsd. The final command draws a curve on the existing plot (the density histogram) by connecting each of the points specifies by x and y. The argument col simply sets the color for the line to be drawn. If we left it out, the line would be drawn in black, as this is the default color.
+
+The top of the curve is cut off because the limits of the x- and y-axes are set to best fit the histogram, not the curve. To adjust the y-axis you can add a third argument to the histogram function: ylim = c(0, 0.06). **Add that argument to your previous code so that you can adjust the y-axis.**
+
+**Exercise 2.** Based on the this plot, does it appear that the data follow a nearly normal distribution?
+
+**Answer:**
+
+### Evaluating the normal distribution
+
+Eyeballing the shape of the histogram is one way to determine if the data appear to be nearly normally distributed, but it can be frustrating to decide just how close the histogram is to the curve. An alternative approach involves constructing a normal probability plot, also called a normal Q-Q plot for "quantile-quantile".
+
+```{r qqplot}
+qqnorm(fdims$hgt)
+qqline(fdims$hgt)
+```
+
+A data set that is nearly normal will result in a probability plot where the points closely follow the line. Any deviations from normality leads to deviations of these points from the line. The plot for female heights shows points that tend to follow the line but with some errant points towards the tails. We're left with the same problem that we encountered with the histogram above: how close is close enough?
+
+A useful way to address this question is to rephrase it as: what do probability plots look like for data that I know came from a normal distribution? We can answer this by simulating data from a normal distribution using rnorm.
+
+```{r rnorm}
+sim_norm <- rnorm(n = length(fdims$hgt), mean = fhgtmean, sd = fhgtsd)
+```
+
+The first argument indicates how many numbers you'd like to generate, which we specify to be the same number of heights in the fdims data set using the length function. The last two arguments determine the mean and standard deviation of the normal distribution from which the simulated sample will be generated. We can take a look at the shape of our simulated data set, sim_norm, as well as its normal probability plot.
+
+**Exercise 3.* Make a normal probability plot of sim_norm. Do all of the points fall on the line? How does this plot compare to the probability plot for the real data?
+
+```{r}
+
+```
+
+**Answer:**
+
+Even better than comparing the original plot to a single plot generated from a normal distribution is to compare it to many more plots using the following function.
+
+```{r qqnormsim}
+qqnormsim(fdims$hgt)
+```
+
+**Exercise 4.** Does the normal probability plot for fdims$hgt look similar to the plots created for the simulated data? That is, do plots provide evidence that the female heights are nearly normal?
+
+DELETE THIS LINE AND ANSWER THIS QUESTION USING TEXT. NO R REQUIRED.
+
+**Exercise 5.** Using the same technique (use a normal probability plot), determine whether or not female weights appear to come from a normal distribution.
+
+```{r}
+
+```
+
+
+### Normal probabilities
+
+Okay, so now you have a slew of tools to judge whether or not a variable is normally distributed. Why should we care?
+
+It turns out that statisticians know a lot about the normal distribution. Once we decide that a random variable is approximately normal, we can answer all sorts of questions about that variable related to probability. Take, for example, the question of, "What is the probability that a randomly chosen young adult female is taller than 6 feet (about 182 cm)?" (The study that published this data set is clear to point out that the sample was not random and therefore inference to a general population is not suggested. We do so here only as an exercise.)
+
+If we assume that female heights are normally distributed (a very close approximation is also okay), we can find this probability by calculating a Z score and consulting a Z table (also called a normal probability table). In R, this is done in one step with the function pnorm.
+
+```{r}
+1 - pnorm(q = 182, mean = fhgtmean, sd = fhgtsd)
+```
+
+We can also "draw" the picture associated with this probability in R. We can do this using ggplot(). Let's do this first for some arbitrary probabilities so we can see how it works.
+
+```{r}
+## This is going to set the bounds for x - we are going three standard deviations from the mean.
+## For a standard normal, these are the appropriate bounds
+lb <- -3
+ub <- 3
+
+## Here we are creating a data frame with x and y values that will be used to make the 
+## region we are going to shade.
+dens <- data.frame(x=seq(lb,ub,length=101),
+                   y=as.vector(dnorm(x=seq(lb,ub,length=101),
+                                     mean=0,
+                                     sd=1)))
+
+## Subset data and add coordinates to make it shade to y=0
+## This is the region we are going to shade
+## This is for P(Z <= -1)
+shade <- rbind(c(-4,0), subset(dens, x <= -1), c(-1,0))
+
+## Normal density plot with shading!!
+p1 <- (ggplot(data = data.frame(x = c(lb, ub)), aes(x)) 
+       + stat_function(fun = dnorm, 
+                       n = 101, args = list(mean = 0, 
+                                            sd = 1)) 
+       + geom_polygon(data = shade, aes(x, y), alpha=0.7, 
+                      color="blue", fill="lightblue")
+       + xlim(c(lb,ub))
+       + xlab("z")
+       + ylab("") 
+       + theme_bw()
+       + ggtitle("P(Z < -1)")
+       + scale_y_continuous(breaks = NULL))
+p1
+```
+
+Now let's look at this for another probability, still with the standard normal.
+
+```{r}
+## Plot bounds (+/- 3 SD)
+lb <- -3
+ub <- 3
+
+dens <- data.frame(x=seq(lb,ub,length=101),
+                   y=as.vector(dnorm(x=seq(lb,ub,length=101),
+                                     mean=0,
+                                     sd=1)))
+
+## Subset data and add coordinates to make it shade to y=0
+## This is for P(Z >= 1)
+shade <- rbind(c(1,0), subset(dens, x > 1), c(4,0))
+
+## Normal density plot with shading!!
+p1 <- (ggplot(data = data.frame(x = c(lb, ub)), aes(x)) 
+       + stat_function(fun = dnorm, 
+                       n = 101, args = list(mean = 0, 
+                                            sd = 1)) 
+       + geom_polygon(data = shade, aes(x, y), alpha=0.7, 
+                      color="blue", fill="lightblue")
+       + xlim(c(lb,ub))
+       + xlab("z")
+       + ylab("") 
+       + theme_bw()
+       + ggtitle("P(Z > 1)")
+       + scale_y_continuous(breaks = NULL))
+p1
+```
+
+The inner probabilities are a little more challenging to plot, but let's do one.
+
+```{r}
+## Plot bounds (+/- 3 SD)
+lb <- -3
+ub <- 3
+
+dens <- data.frame(x=seq(lb,ub,length=101),
+                   y=as.vector(dnorm(x=seq(lb,ub,length=101),
+                                     mean=0,
+                                     sd=1)))
+
+## Subset data and add coordinates to make it shade to y=0
+## This is for P(-1 < Z < 1)
+shade <- rbind(c(-1,0), subset(dens, x >= -1 & x <= 1), c(1,0))
+
+## Normal density plot with shading!!
+p1 <- (ggplot(data = data.frame(x = c(lb, ub)), aes(x)) 
+       + stat_function(fun = dnorm, 
+                       n = 101, args = list(mean = 0, 
+                                            sd = 1)) 
+       + geom_polygon(data = shade, aes(x, y), alpha=0.7, 
+                      color="blue", fill="lightblue")
+       + xlim(c(lb,ub))
+       + xlab("z")
+       + ylab("") 
+       + theme_bw()
+       + ggtitle("P(-1 < Z < 1)")
+       + scale_y_continuous(breaks = NULL))
+p1
+```
+
+Let's do the same probability, but for a different normal distribution. Try this for P(-2 < X < 2), where X ~ Normal(1,2). See how the code changes?
+
+```{r}
+## Plot bounds (+/- 3 SD)
+## Now multiply these by the SD
+lb <- -3*2+1 #-3*SD+mean
+ub <- 3*2+1  #3*SD+mean
+
+dens <- data.frame(x=seq(lb,ub,length=101),
+                   y=as.vector(dnorm(x=seq(lb,ub,length=101),
+                                     mean=0+1,
+                                     sd=1*2)))
+
+## Subset data and add coordinates to make it shade to y=0
+## This is for P(-1 < Z < 1)
+shade <- rbind(c(-2,0), subset(dens, x >= -2 & x <= 2), c(2,0))
+
+## Normal density plot with shading!!
+p1 <- (ggplot(data = data.frame(x = c(lb, ub)), aes(x)) 
+       + stat_function(fun = dnorm, 
+                       n = 101, args = list(mean = 0+1, 
+                                            sd = 1*2)) 
+       + geom_polygon(data = shade, aes(x, y), alpha=0.7, 
+                      color="blue", fill="lightblue")
+       + xlim(c(lb,ub))
+       + xlab("z")
+       + ylab("") 
+       + theme_bw()
+       + ggtitle("P(-2 < Z < 2)")
+       + scale_y_continuous(breaks = NULL))
+p1
+```
+
+Now, draw a plot density plot with appropriate shading for this problem. You'll need to alter the values in the code accordingly.
+
+```{r pnorm fcn}
+## P(X < 182)
+1 - pnorm(q = 182, mean = fhgtmean, sd = fhgtsd)
+```
+
+Note that the function pnorm gives the area under the normal curve below a given value, q, with a given mean and standard deviation. Since we’re interested in the probability that someone is taller than 182 cm, we have to take one minus that probability.
+
+Assuming a normal distribution has allowed us to calculate a theoretical probability. If we want to calculate the probability empirically, we simply need to determine how many observations fall above 182 then divide this number by the total sample size.
+
+```{r empirical probability}
+sum(fdims$hgt > 182) / length(fdims$hgt)
+```
+
+Although the probabilities are not exactly the same, they are reasonably close. The closer that your distribution is to being normal, the more accurate the theoretical probabilities will be.
+
+**Exercise 6.** Write out two probability questions that you would like to answer; one regarding female heights and one regarding female weights. Calculate those probabilities using both the theoretical normal distribution as well as the empirical distribution (four probabilities in all). Which variable, height or weight, had a closer agreement between the two methods?
+
+```{r}
+
+```
+
+
+**Answer:**
